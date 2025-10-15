@@ -2,78 +2,13 @@
 
 import { z } from "zod";
 
+// Configuration interface (not derived from API)
 export interface PremiumizeConfig {
   apiKey: string;
   baseUrl?: string;
 }
 
-export interface AccountInfo {
-  customer_id: string;
-  premium_until: number;
-  limit_used: number;
-  limit_total: number;
-  space_used: number;
-  space_total: number;
-}
-
-export interface Transfer {
-  id: string;
-  name: string;
-  message: string;
-  status: "running" | "finished" | "error";
-  progress: number;
-  eta: number;
-  folder_id: string;
-  file_id: string;
-}
-
-export interface CreateTransferRequest {
-  src: string; // magnet or torrent URL
-  folder_id?: string;
-}
-
-export interface CreateTransferResponse {
-  id: string;
-  name: string;
-  status: string;
-}
-
-export interface ListTransfersResponse {
-  transfers: Transfer[];
-}
-
-export interface Folder {
-  id: string;
-  name: string;
-  parent_id: string;
-  type: "folder";
-}
-
-export interface File {
-  id: string;
-  name: string;
-  size: number;
-  created_at: number;
-  type: "file";
-  mime_type: string;
-  link: string;
-}
-
-export type Item = Folder | File;
-
-export interface ListFolderResponse {
-  content: Item[];
-  name: string;
-  parent_id: string;
-}
-
-export interface ApiResponse<T> {
-  status: "success" | "error";
-  message?: string;
-  data?: T;
-}
-
-// Zod Schemas
+// Zod Schemas (single source of truth)
 export const AccountInfoSchema = z.object({
   customer_id: z.string(),
   premium_until: z.number(),
@@ -148,19 +83,20 @@ export const CreateFolderResponseSchema = ApiResponseSchema(
 );
 export const DeleteFolderResponseSchema = ApiResponseSchema(z.null());
 
-// Type inference from schemas
-export type AccountInfoType = z.infer<typeof AccountInfoSchema>;
-export type TransferType = z.infer<typeof TransferSchema>;
-export type CreateTransferRequestType = z.infer<
-  typeof CreateTransferRequestSchema
->;
-export type CreateTransferResponseType = z.infer<
+// Type inference from schemas (derived types)
+export type AccountInfo = z.infer<typeof AccountInfoSchema>;
+export type Transfer = z.infer<typeof TransferSchema>;
+export type CreateTransferRequest = z.infer<typeof CreateTransferRequestSchema>;
+export type CreateTransferResponse = z.infer<
   typeof CreateTransferResponseSchema
 >;
-export type ListTransfersResponseType = z.infer<
-  typeof ListTransfersResponseSchema
->;
-export type FolderType = z.infer<typeof FolderSchema>;
-export type FileType = z.infer<typeof FileSchema>;
-export type ItemType = z.infer<typeof ItemSchema>;
-export type ListFolderResponseType = z.infer<typeof ListFolderResponseSchema>;
+export type ListTransfersResponse = z.infer<typeof ListTransfersResponseSchema>;
+export type Folder = z.infer<typeof FolderSchema>;
+export type File = z.infer<typeof FileSchema>;
+export type Item = z.infer<typeof ItemSchema>;
+export type ListFolderResponse = z.infer<typeof ListFolderResponseSchema>;
+export type ApiResponse<T> = {
+  status: "success" | "error";
+  message?: string;
+  data?: T;
+};
