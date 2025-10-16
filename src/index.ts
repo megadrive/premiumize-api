@@ -8,6 +8,15 @@ import {
   ListTransfersResponse,
   ListFolderResponse,
   ApiResponse,
+  ListAllItemsResponse,
+  UploadInfoResponse,
+  SearchFolderResponse,
+  ItemDetailsResponse,
+  DirectDownloadRequest,
+  DirectDownloadResponse,
+  GenerateZipResponse,
+  CheckCacheResponse,
+  ListServicesResponse,
   AccountInfoSchema,
   CreateTransferResponseSchema,
   ListTransfersResponseSchema,
@@ -15,11 +24,27 @@ import {
   DeleteTransferResponseSchema,
   CreateFolderResponseSchema,
   DeleteFolderResponseSchema,
+  RenameFolderResponseSchema,
+  PasteFolderResponseSchema,
+  SearchFolderResponseSchema,
+  DeleteItemResponseSchema,
+  RenameItemResponseSchema,
+  ItemDetailsResponseSchema,
+  DirectDownloadResponseSchema,
+  ClearFinishedTransfersResponseSchema,
+  GenerateZipResponseSchema,
+  CheckCacheResponseSchema,
+  ListServicesResponseSchema,
+  ListAllItemsResponseSchema,
 } from "./types";
 
 export class PremiumizeClient {
   private client: AxiosInstance;
   private config: PremiumizeConfig;
+
+  static create(apiKey: string, baseUrl?: string): PremiumizeClient {
+    return new PremiumizeClient({ apiKey, baseUrl });
+  }
 
   constructor(config: PremiumizeConfig) {
     this.config = {
@@ -127,6 +152,125 @@ export class PremiumizeClient {
       "folder/delete",
       { id },
       DeleteFolderResponseSchema
+    );
+  }
+
+  async listAllItems(): Promise<ListAllItemsResponse> {
+    return this.request<ListAllItemsResponse>(
+      "item/listall",
+      {},
+      ListAllItemsResponseSchema
+    );
+  }
+
+  // Folder operations
+  async renameFolder(id: string, name: string): Promise<ApiResponse<null>> {
+    return this.request<ApiResponse<null>>(
+      "folder/rename",
+      { id, name },
+      RenameFolderResponseSchema
+    );
+  }
+
+  async pasteFolder(id: string, items: string[]): Promise<ApiResponse<null>> {
+    return this.request<ApiResponse<null>>(
+      "folder/paste",
+      { id, items: items.join(",") },
+      PasteFolderResponseSchema
+    );
+  }
+
+  async getUploadInfo(folderId?: string): Promise<UploadInfoResponse> {
+    const params = folderId ? { id: folderId } : {};
+    return this.request<UploadInfoResponse>("folder/uploadinfo", params);
+  }
+
+  async searchFolder(
+    query: string,
+    folderId?: string
+  ): Promise<SearchFolderResponse> {
+    const params: any = { q: query };
+    if (folderId) params.folder_id = folderId;
+    return this.request<SearchFolderResponse>(
+      "folder/search",
+      params,
+      SearchFolderResponseSchema
+    );
+  }
+
+  // Item operations
+  async deleteItem(id: string): Promise<ApiResponse<null>> {
+    return this.request<ApiResponse<null>>(
+      "item/delete",
+      { id },
+      DeleteItemResponseSchema
+    );
+  }
+
+  async renameItem(id: string, name: string): Promise<ApiResponse<null>> {
+    return this.request<ApiResponse<null>>(
+      "item/rename",
+      { id, name },
+      RenameItemResponseSchema
+    );
+  }
+
+  async getItemDetails(id: string): Promise<ItemDetailsResponse> {
+    return this.request<ItemDetailsResponse>(
+      "item/details",
+      { id },
+      ItemDetailsResponseSchema
+    );
+  }
+
+  // Transfer operations
+  async createDirectDownload(
+    request: DirectDownloadRequest
+  ): Promise<DirectDownloadResponse> {
+    return this.request<DirectDownloadResponse>(
+      "transfer/directdl",
+      request,
+      DirectDownloadResponseSchema
+    );
+  }
+
+  async clearFinishedTransfers(): Promise<ApiResponse<null>> {
+    return this.request<ApiResponse<null>>(
+      "transfer/clearfinished",
+      {},
+      ClearFinishedTransfersResponseSchema
+    );
+  }
+
+  // Zip operations
+  async generateZip(
+    items: string[],
+    name?: string
+  ): Promise<GenerateZipResponse> {
+    const params: any = { items: items.join(",") };
+    if (name) params.name = name;
+    return this.request<GenerateZipResponse>(
+      "zip/generate",
+      params,
+      GenerateZipResponseSchema
+    );
+  }
+
+  // Cache operations
+  async checkCache(urls: string[]): Promise<CheckCacheResponse> {
+    return this.request<CheckCacheResponse>(
+      "cache/check",
+      { items: urls.join(",") },
+      CheckCacheResponseSchema
+    );
+  }
+
+  // Services operations
+  async listServices(): Promise<ListServicesResponse> {
+    return this.request<ListServicesResponse>(
+      "services/list",
+      {},
+      ListServicesResponseSchema
     );
   }
 }

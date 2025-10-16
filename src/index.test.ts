@@ -268,6 +268,106 @@ describe("PremiumizeClient", () => {
     });
   });
 
+  describe("listAllItems", () => {
+    it("should list all items", async () => {
+      const mockResponse = {
+        data: {
+          status: "success",
+          files: [
+            {
+              id: "file-1",
+              name: "test.txt",
+              size: 1024,
+              created_at: 1640995200,
+              type: "file",
+              mime_type: "text/plain",
+              link: "https://example.com/file",
+            },
+          ],
+        },
+      };
+      mockAxiosInstance.post.mockResolvedValue(mockResponse);
+
+      const result = await client.listAllItems();
+      expect(result.files).toHaveLength(1);
+      expect(result.files[0].name).toBe("test.txt");
+    });
+  });
+
+  describe("createDirectDownload", () => {
+    it("should create direct download", async () => {
+      const mockResponse = {
+        data: {
+          location: "https://direct-download-url.com",
+        },
+      };
+      mockAxiosInstance.post.mockResolvedValue(mockResponse);
+
+      const result = await client.createDirectDownload({
+        src: "magnet:?xt=urn:btih:test",
+      });
+      expect(result.location).toBe("https://direct-download-url.com");
+    });
+  });
+
+  describe("generateZip", () => {
+    it("should generate zip", async () => {
+      const mockResponse = {
+        data: {
+          location: "https://zip-download-url.com",
+        },
+      };
+      mockAxiosInstance.post.mockResolvedValue(mockResponse);
+
+      const result = await client.generateZip(["file-1", "file-2"], "my-zip");
+      expect(result.location).toBe("https://zip-download-url.com");
+    });
+  });
+
+  describe("checkCache", () => {
+    it("should check cache", async () => {
+      const mockResponse = {
+        data: {
+          response: [
+            {
+              url: "https://example.com/file1",
+              status: "success",
+              filename: "file1.txt",
+              filesize: 1024,
+              link: "https://premiumize-link.com",
+            },
+          ],
+        },
+      };
+      mockAxiosInstance.post.mockResolvedValue(mockResponse);
+
+      const result = await client.checkCache(["https://example.com/file1"]);
+      expect(result.response).toHaveLength(1);
+      expect(result.response[0].status).toBe("success");
+    });
+  });
+
+  describe("listServices", () => {
+    it("should list services", async () => {
+      const mockResponse = {
+        data: {
+          services: [
+            {
+              name: "Mega",
+              domains: ["mega.nz", "mega.co.nz"],
+              status: "online",
+            },
+          ],
+        },
+      };
+      mockAxiosInstance.post.mockResolvedValue(mockResponse);
+
+      const result = await client.listServices();
+      expect(result.services).toHaveLength(1);
+      expect(result.services[0].name).toBe("Mega");
+    });
+  });
+
   describe("error handling", () => {
     it("should handle network errors", async () => {
       const networkError = new Error("Network Error");

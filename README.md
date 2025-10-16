@@ -14,11 +14,18 @@ pnpm add premiumize-api
 
 ## Usage
 
+### Quick Start
+
 ```typescript
 import { PremiumizeClient } from 'premiumize-api';
 
+// Using static method (recommended)
+const client = PremiumizeClient.create('your-api-key-here');
+
+// Or using constructor
 const client = new PremiumizeClient({
-  apiKey: 'your-api-key-here'
+  apiKey: 'your-api-key-here',
+  baseUrl: 'https://custom-api-endpoint.com' // optional
 });
 
 // Get account info
@@ -42,13 +49,39 @@ console.log(folder);
 
 ## API Methods
 
+### Account
 - `getAccountInfo()`: Get account information and limits
+
+### Transfers
 - `createTransfer(request)`: Create a new transfer from magnet/torrent
 - `listTransfers()`: List all active transfers
 - `deleteTransfer(id)`: Delete a transfer
+- `createDirectDownload(request)`: Create a direct download link
+- `clearFinishedTransfers()`: Clear all finished transfers
+
+### Folders
 - `listFolder(folderId?)`: List contents of a folder
 - `createFolder(name, parentId?)`: Create a new folder
 - `deleteFolder(id)`: Delete a folder
+- `renameFolder(id, name)`: Rename a folder
+- `pasteFolder(id, items[])`: Paste multiple files/folders into a folder
+- `getUploadInfo(folderId?)`: Get upload info for file uploads
+- `searchFolder(query, folderId?)`: Search files and folders
+
+### Items (Files)
+- `listAllItems()`: List all files across all folders
+- `deleteItem(id)`: Delete a file
+- `renameItem(id, name)`: Rename a file
+- `getItemDetails(id)`: Get detailed information about a file
+
+### Zip
+- `generateZip(items[], name?)`: Generate a zip file from multiple items
+
+### Cache
+- `checkCache(urls[])`: Check if URLs are available in Premiumize cache
+
+### Services
+- `listServices()`: Get list of supported services and domains
 
 ## Configuration
 
