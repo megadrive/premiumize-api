@@ -1,5 +1,5 @@
 import axios from "axios";
-import { PremiumizeClient } from "../src";
+import { PremiumizeClient, PremiumizeError, ApiRequestError } from "../src";
 
 // Mock Axios
 jest.mock("axios");
@@ -51,7 +51,18 @@ describe("PremiumizeClient", () => {
       };
       mockAxiosInstance.post.mockResolvedValue(mockResponse);
 
-      await expect(client.getAccountInfo()).rejects.toThrow("Invalid API key");
+      // Assert it's the custom PremiumizeError and that the message is preserved.
+      await expect(client.getAccountInfo()).rejects.toBeInstanceOf(
+        PremiumizeError,
+      );
+
+      // Also verify the message and the raw payload are available on the error.
+      try {
+        await client.getAccountInfo();
+      } catch (err: any) {
+        expect(err.message).toBe("Invalid API key");
+        expect(err.raw).toEqual(mockResponse.data);
+      }
     });
 
     it("should throw error on validation failure", async () => {
@@ -64,9 +75,19 @@ describe("PremiumizeClient", () => {
       };
       mockAxiosInstance.post.mockResolvedValue(mockResponse);
 
-      await expect(client.getAccountInfo()).rejects.toThrow(
-        "API response validation failed"
+      // Validation failures are surfaced as PremiumizeError with details.
+      await expect(client.getAccountInfo()).rejects.toBeInstanceOf(
+        PremiumizeError,
       );
+
+      try {
+        await client.getAccountInfo();
+      } catch (err: any) {
+        expect(err.message).toContain("API response validation failed");
+        // The raw field should include the original response data for debugging.
+        expect(err.raw.data).toEqual(mockResponse.data);
+        expect(err.raw.validation).toBeDefined();
+      }
     });
   });
 
@@ -112,7 +133,7 @@ describe("PremiumizeClient", () => {
             src: "magnet:?xt=urn:btih:test",
             folder_id: "folder-456",
           },
-        }
+        },
       );
     });
   });
@@ -249,7 +270,7 @@ describe("PremiumizeClient", () => {
             name: "New Folder",
             parent_id: "parent-456",
           },
-        }
+        },
       );
     });
   });
@@ -373,6 +394,7 @@ describe("PremiumizeClient", () => {
       const networkError = new Error("Network Error");
       mockAxiosInstance.post.mockRejectedValue(networkError);
 
+      // Non-axios runtime/network errors should still bubble up as-is.
       await expect(client.getAccountInfo()).rejects.toThrow("Network Error");
     });
 
@@ -384,9 +406,18 @@ describe("PremiumizeClient", () => {
       (mockedAxios.isAxiosError as any).mockReturnValue(true);
       mockAxiosInstance.post.mockRejectedValue(axiosError);
 
-      await expect(client.getAccountInfo()).rejects.toThrow(
-        "API request failed: Request timeout"
+      // Axios-level errors are wrapped in ApiRequestError.
+      await expect(client.getAccountInfo()).rejects.toBeInstanceOf(
+        ApiRequestError,
       );
+
+      try {
+        await client.getAccountInfo();
+      } catch (err: any) {
+        expect(err.message).toContain("Request timeout");
+        expect(err.original).toBe(axiosError);
+        expect(err.isAxiosError).toBe(true);
+      }
     });
   });
 });

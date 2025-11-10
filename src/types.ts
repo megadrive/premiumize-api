@@ -108,7 +108,7 @@ export const SearchResultSchema = z.object({
 });
 
 export const SearchFolderResponseSchema = z.object({
-  results: z.array(SearchResultSchema),
+  content: z.array(SearchResultSchema),
 });
 
 // Item operations
@@ -126,7 +126,7 @@ export const ItemDetailsResponseSchema = z.object({
   name: z.string(),
   size: z.number(),
   created_at: z.number(),
-  type: z.literal("file"),
+  type: z.string(),
   mime_type: z.string(),
   link: z.string(),
   virus_scan: z.string().optional(),
@@ -192,7 +192,7 @@ export const ApiResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
 // Specific API response schemas
 export const DeleteTransferResponseSchema = ApiResponseSchema(z.null());
 export const CreateFolderResponseSchema = ApiResponseSchema(
-  z.object({ id: z.string() })
+  z.object({ id: z.string() }),
 );
 export const DeleteFolderResponseSchema = ApiResponseSchema(z.null());
 export const RenameFolderResponseSchema = ApiResponseSchema(z.null());

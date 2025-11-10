@@ -37,6 +37,7 @@ import {
   ListServicesResponseSchema,
   ListAllItemsResponseSchema,
 } from "./types";
+import { PremiumizeError, ApiRequestError } from "./errors";
 
 export class PremiumizeClient {
   private client: AxiosInstance;
@@ -72,16 +73,22 @@ export class PremiumizeClient {
         },
       });
 
-      if (response.data.status === "error") {
-        throw new Error(response.data.message || "API request failed");
+      // API-level error returned in the body
+      if (response.data && response.data.status === "error") {
+        throw new PremiumizeError(
+          response.data.message || "API request failed",
+          response.data,
+        );
       }
 
       // Validate response with Zod schema if provided
       if (schema) {
         const validationResult = schema.safeParse(response.data);
         if (!validationResult.success) {
-          throw new Error(
+          // Include validation error + original data for debugging
+          throw new PremiumizeError(
             `API response validation failed: ${validationResult.error.message}`,
+            { validation: validationResult.error, data: response.data },
           );
         }
         return validationResult.data as T;
@@ -90,8 +97,12 @@ export class PremiumizeClient {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(`API request failed: ${error.message}`);
+        throw new ApiRequestError(
+          `API request failed: ${error.message}`,
+          error,
+        );
       }
+      // Re-throw custom errors (PremiumizeError) or other unexpected errors
       throw error;
     }
   }
@@ -286,4 +297,5 @@ export class PremiumizeClient {
   }
 }
 
+export { PremiumizeError, ApiRequestError } from "./errors";
 export default PremiumizeClient;
