@@ -61,10 +61,11 @@ export class PremiumizeClient {
   private async request<T>(
     endpoint: string,
     params: Record<string, any> = {},
-    schema?: z.ZodTypeAny
+    schema?: z.ZodTypeAny,
+    method: "get" | "post" = "get",
   ): Promise<T> {
     try {
-      const response = await this.client.post(endpoint, null, {
+      const response = await this.client[method](endpoint, {
         params: {
           apikey: this.config.apiKey,
           ...params,
@@ -80,7 +81,7 @@ export class PremiumizeClient {
         const validationResult = schema.safeParse(response.data);
         if (!validationResult.success) {
           throw new Error(
-            `API response validation failed: ${validationResult.error.message}`
+            `API response validation failed: ${validationResult.error.message}`,
           );
         }
         return validationResult.data as T;
@@ -100,12 +101,13 @@ export class PremiumizeClient {
   }
 
   async createTransfer(
-    request: CreateTransferRequest
+    request: CreateTransferRequest,
   ): Promise<CreateTransferResponse> {
     return this.request<CreateTransferResponse>(
       "transfer/create",
       request,
-      CreateTransferResponseSchema
+      CreateTransferResponseSchema,
+      "post",
     );
   }
 
@@ -113,7 +115,7 @@ export class PremiumizeClient {
     return this.request<ListTransfersResponse>(
       "transfer/list",
       {},
-      ListTransfersResponseSchema
+      ListTransfersResponseSchema,
     );
   }
 
@@ -121,7 +123,8 @@ export class PremiumizeClient {
     return this.request<ApiResponse<null>>(
       "transfer/delete",
       { id },
-      DeleteTransferResponseSchema
+      DeleteTransferResponseSchema,
+      "post",
     );
   }
 
@@ -130,20 +133,21 @@ export class PremiumizeClient {
     return this.request<ListFolderResponse>(
       "folder/list",
       params,
-      ListFolderResponseSchema
+      ListFolderResponseSchema,
     );
   }
 
   async createFolder(
     name: string,
-    parentId?: string
+    parentId?: string,
   ): Promise<ApiResponse<{ id: string }>> {
     const params: any = { name };
     if (parentId) params.parent_id = parentId;
     return this.request<ApiResponse<{ id: string }>>(
       "folder/create",
       params,
-      CreateFolderResponseSchema
+      CreateFolderResponseSchema,
+      "post",
     );
   }
 
@@ -151,7 +155,8 @@ export class PremiumizeClient {
     return this.request<ApiResponse<null>>(
       "folder/delete",
       { id },
-      DeleteFolderResponseSchema
+      DeleteFolderResponseSchema,
+      "post",
     );
   }
 
@@ -159,7 +164,7 @@ export class PremiumizeClient {
     return this.request<ListAllItemsResponse>(
       "item/listall",
       {},
-      ListAllItemsResponseSchema
+      ListAllItemsResponseSchema,
     );
   }
 
@@ -168,7 +173,8 @@ export class PremiumizeClient {
     return this.request<ApiResponse<null>>(
       "folder/rename",
       { id, name },
-      RenameFolderResponseSchema
+      RenameFolderResponseSchema,
+      "post",
     );
   }
 
@@ -176,7 +182,8 @@ export class PremiumizeClient {
     return this.request<ApiResponse<null>>(
       "folder/paste",
       { id, items: items.join(",") },
-      PasteFolderResponseSchema
+      PasteFolderResponseSchema,
+      "post",
     );
   }
 
@@ -187,14 +194,14 @@ export class PremiumizeClient {
 
   async searchFolder(
     query: string,
-    folderId?: string
+    folderId?: string,
   ): Promise<SearchFolderResponse> {
-    const params: any = { q: query };
+    const params: Record<string, string> = { q: query };
     if (folderId) params.folder_id = folderId;
     return this.request<SearchFolderResponse>(
       "folder/search",
       params,
-      SearchFolderResponseSchema
+      SearchFolderResponseSchema,
     );
   }
 
@@ -203,7 +210,8 @@ export class PremiumizeClient {
     return this.request<ApiResponse<null>>(
       "item/delete",
       { id },
-      DeleteItemResponseSchema
+      DeleteItemResponseSchema,
+      "post",
     );
   }
 
@@ -211,7 +219,8 @@ export class PremiumizeClient {
     return this.request<ApiResponse<null>>(
       "item/rename",
       { id, name },
-      RenameItemResponseSchema
+      RenameItemResponseSchema,
+      "post",
     );
   }
 
@@ -219,18 +228,19 @@ export class PremiumizeClient {
     return this.request<ItemDetailsResponse>(
       "item/details",
       { id },
-      ItemDetailsResponseSchema
+      ItemDetailsResponseSchema,
     );
   }
 
   // Transfer operations
   async createDirectDownload(
-    request: DirectDownloadRequest
+    request: DirectDownloadRequest,
   ): Promise<DirectDownloadResponse> {
     return this.request<DirectDownloadResponse>(
       "transfer/directdl",
       request,
-      DirectDownloadResponseSchema
+      DirectDownloadResponseSchema,
+      "post",
     );
   }
 
@@ -238,21 +248,22 @@ export class PremiumizeClient {
     return this.request<ApiResponse<null>>(
       "transfer/clearfinished",
       {},
-      ClearFinishedTransfersResponseSchema
+      ClearFinishedTransfersResponseSchema,
     );
   }
 
   // Zip operations
   async generateZip(
     items: string[],
-    name?: string
+    name?: string,
   ): Promise<GenerateZipResponse> {
     const params: any = { items: items.join(",") };
     if (name) params.name = name;
     return this.request<GenerateZipResponse>(
       "zip/generate",
       params,
-      GenerateZipResponseSchema
+      GenerateZipResponseSchema,
+      "post",
     );
   }
 
@@ -261,7 +272,7 @@ export class PremiumizeClient {
     return this.request<CheckCacheResponse>(
       "cache/check",
       { items: urls.join(",") },
-      CheckCacheResponseSchema
+      CheckCacheResponseSchema,
     );
   }
 
@@ -270,7 +281,7 @@ export class PremiumizeClient {
     return this.request<ListServicesResponse>(
       "services/list",
       {},
-      ListServicesResponseSchema
+      ListServicesResponseSchema,
     );
   }
 }
