@@ -1,53 +1,24 @@
 import axios, { AxiosInstance } from "axios";
 import { z } from "zod";
-import {
-  PremiumizeConfig,
-  AccountInfo,
-  CreateTransferRequest,
-  CreateTransferResponse,
-  ListTransfersResponse,
-  ListFolderResponse,
-  ApiResponse,
-  ListAllItemsResponse,
-  UploadInfoResponse,
-  SearchFolderResponse,
-  ItemDetailsResponse,
-  DirectDownloadRequest,
-  DirectDownloadResponse,
-  GenerateZipResponse,
-  CheckCacheResponse,
-  ListServicesResponse,
-  AccountInfoSchema,
-  CreateTransferResponseSchema,
-  ListTransfersResponseSchema,
-  ListFolderResponseSchema,
-  DeleteTransferResponseSchema,
-  CreateFolderResponseSchema,
-  DeleteFolderResponseSchema,
-  RenameFolderResponseSchema,
-  PasteFolderResponseSchema,
-  SearchFolderResponseSchema,
-  DeleteItemResponseSchema,
-  RenameItemResponseSchema,
-  ItemDetailsResponseSchema,
-  DirectDownloadResponseSchema,
-  ClearFinishedTransfersResponseSchema,
-  GenerateZipResponseSchema,
-  CheckCacheResponseSchema,
-  ListServicesResponseSchema,
-  ListAllItemsResponseSchema,
-} from "./types";
-import { PremiumizeError, ApiRequestError } from "./errors";
+import * as P from "./types";
+import { HTTPError, PremiumizeError } from "./errors";
+
+type RequestArguments = {
+  endpoint: string;
+  params: Record<string, any>;
+  schema?: z.ZodTypeAny;
+  method?: "get" | "post";
+};
 
 export class PremiumizeClient {
   private client: AxiosInstance;
-  private config: PremiumizeConfig;
+  private config: P.PremiumizeConfig;
 
   static create(apiKey: string, baseUrl?: string): PremiumizeClient {
     return new PremiumizeClient({ apiKey, baseUrl });
   }
 
-  constructor(config: PremiumizeConfig) {
+  constructor(config: P.PremiumizeConfig) {
     this.config = {
       baseUrl: "https://www.premiumize.me/api",
       ...config,
@@ -59,18 +30,11 @@ export class PremiumizeClient {
     });
   }
 
-  private async request<T>(
-    endpoint: string,
-    params: Record<string, any> = {},
-    schema?: z.ZodTypeAny,
-    method: "get" | "post" = "get",
-  ): Promise<T> {
+  private async request<T>(opts: RequestArguments): Promise<T> {
     try {
-      const response = await this.client[method](endpoint, {
-        params: {
-          apikey: this.config.apiKey,
-          ...params,
-        },
+      let response = await this.client[opts.method ?? "get"](opts.endpoint, {
+        apikey: this.config.apiKey,
+        ...opts.params,
       });
 
       // API-level error returned in the body
@@ -82,13 +46,11 @@ export class PremiumizeClient {
       }
 
       // Validate response with Zod schema if provided
-      if (schema) {
-        const validationResult = schema.safeParse(response.data);
+      if (opts.schema) {
+        const validationResult = opts.schema.safeParse(response.data);
         if (!validationResult.success) {
-          // Include validation error + original data for debugging
-          throw new PremiumizeError(
+          throw new Error(
             `API response validation failed: ${validationResult.error.message}`,
-            { validation: validationResult.error, data: response.data },
           );
         }
         return validationResult.data as T;
@@ -97,205 +59,201 @@ export class PremiumizeClient {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new ApiRequestError(
-          `API request failed: ${error.message}`,
-          error,
-        );
+        throw new HTTPError(`API request failed: ${error.message}`);
       }
       // Re-throw custom errors (PremiumizeError) or other unexpected errors
       throw error;
     }
   }
 
-  async getAccountInfo(): Promise<AccountInfo> {
-    return this.request<AccountInfo>("account/info", {}, AccountInfoSchema);
+  listFolder(
+    opts: P.ListFolderRequest = { includebreadcrumbs: false },
+  ): Promise<P.ListFolderResponse> {
+    return this.request<P.ListFolderResponse>({
+      endpoint: "/folder/list",
+      params: {
+        id: opts.id,
+        includebreadcrumbs: opts.includebreadcrumbs,
+      },
+      schema: P.ListFolderResponse,
+    });
   }
 
-  async createTransfer(
-    request: CreateTransferRequest,
-  ): Promise<CreateTransferResponse> {
-    return this.request<CreateTransferResponse>(
-      "transfer/create",
-      request,
-      CreateTransferResponseSchema,
-      "post",
-    );
+  createFolder(opts: P.CreateFolderRequest): Promise<P.CreateFolderResponse> {
+    return this.request<P.CreateFolderResponse>({
+      endpoint: "/folder/create",
+      params: {
+        name: opts.name,
+        parent_id: opts.parent_id,
+      },
+      schema: P.CreateFolderResponse,
+      method: "post",
+    });
   }
 
-  async listTransfers(): Promise<ListTransfersResponse> {
-    return this.request<ListTransfersResponse>(
-      "transfer/list",
-      {},
-      ListTransfersResponseSchema,
-    );
+  renameFolder(opts: P.RenameFolderRequest): Promise<P.RenameFolderResponse> {
+    return this.request<P.RenameFolderResponse>({
+      endpoint: "/folder/rename",
+      params: {
+        id: opts.id,
+        name: opts.name,
+      },
+      schema: P.RenameFolderResponse,
+      method: "post",
+    });
   }
 
-  async deleteTransfer(id: string): Promise<ApiResponse<null>> {
-    return this.request<ApiResponse<null>>(
-      "transfer/delete",
-      { id },
-      DeleteTransferResponseSchema,
-      "post",
-    );
+  // PLACEHOLDER
+  // pasteFolder() { }
+
+  deleteFolder(opts: P.DeleteFolderRequest): Promise<P.DeleteFolderResponse> {
+    return this.request<P.DeleteFolderResponse>({
+      endpoint: "/folder/delete",
+      params: {
+        id: opts.id,
+      },
+      schema: P.DeleteFolderResponse,
+      method: "post",
+    });
   }
 
-  async listFolder(folderId?: string): Promise<ListFolderResponse> {
-    const params = folderId ? { id: folderId } : {};
-    return this.request<ListFolderResponse>(
-      "folder/list",
-      params,
-      ListFolderResponseSchema,
-    );
+  searchFolder(opts: P.SearchFolderRequest): Promise<P.SearchFolderResponse> {
+    return this.request<P.SearchFolderResponse>({
+      endpoint: "/folder/search",
+      params: {
+        q: opts.query,
+      },
+      schema: P.SearchFolderResponse,
+    });
   }
 
-  async createFolder(
-    name: string,
-    parentId?: string,
-  ): Promise<ApiResponse<{ id: string }>> {
-    const params: any = { name };
-    if (parentId) params.parent_id = parentId;
-    return this.request<ApiResponse<{ id: string }>>(
-      "folder/create",
-      params,
-      CreateFolderResponseSchema,
-      "post",
-    );
+  listAllItems(): Promise<P.ListAllItemsResponse> {
+    return this.request<P.ListAllItemsResponse>({
+      endpoint: "/item/listall",
+      params: {},
+      schema: P.ListAllItemsResponse,
+    });
   }
 
-  async deleteFolder(id: string): Promise<ApiResponse<null>> {
-    return this.request<ApiResponse<null>>(
-      "folder/delete",
-      { id },
-      DeleteFolderResponseSchema,
-      "post",
-    );
+  deleteItem(opts: P.DeleteItemRequest): Promise<P.DeleteItemResponse> {
+    return this.request<P.DeleteItemResponse>({
+      endpoint: "/item/delete",
+      params: {
+        id: opts.id,
+      },
+      schema: P.DeleteItemResponse,
+      method: "post",
+    });
   }
 
-  async listAllItems(): Promise<ListAllItemsResponse> {
-    return this.request<ListAllItemsResponse>(
-      "item/listall",
-      {},
-      ListAllItemsResponseSchema,
-    );
+  renameItem(opts: P.RenameItemRequest): Promise<P.RenameItemResponse> {
+    return this.request<P.RenameItemResponse>({
+      endpoint: "/item/rename",
+      params: {
+        id: opts.id,
+        name: opts.name,
+      },
+      schema: P.RenameItemResponse,
+      method: "post",
+    });
   }
 
-  // Folder operations
-  async renameFolder(id: string, name: string): Promise<ApiResponse<null>> {
-    return this.request<ApiResponse<null>>(
-      "folder/rename",
-      { id, name },
-      RenameFolderResponseSchema,
-      "post",
-    );
+  getItemDetails(
+    opts: P.GetItemDetailsRequest,
+  ): Promise<P.GetItemDetailsResponse> {
+    return this.request<P.GetItemDetailsResponse>({
+      endpoint: "/item/details",
+      params: {
+        id: opts.id,
+      },
+      schema: P.GetItemDetailsResponse,
+    });
   }
 
-  async pasteFolder(id: string, items: string[]): Promise<ApiResponse<null>> {
-    return this.request<ApiResponse<null>>(
-      "folder/paste",
-      { id, items: items.join(",") },
-      PasteFolderResponseSchema,
-      "post",
-    );
+  createTransfer(
+    opts: P.CreateTransferRequest,
+  ): Promise<P.CreateTransferResponse> {
+    return this.request<P.CreateTransferResponse>({
+      endpoint: "/transfer/create",
+      params: {
+        src: opts.src,
+        folder_id: opts.folder_id,
+      },
+      schema: P.CreateTransferResponse,
+      method: "post",
+    });
   }
 
-  async getUploadInfo(folderId?: string): Promise<UploadInfoResponse> {
-    const params = folderId ? { id: folderId } : {};
-    return this.request<UploadInfoResponse>("folder/uploadinfo", params);
+  listTransfers(): Promise<P.ListTransfersResponse> {
+    return this.request<P.ListTransfersResponse>({
+      endpoint: "/transfer/list",
+      params: {},
+      schema: P.ListTransfersResponse,
+    });
   }
 
-  async searchFolder(
-    query: string,
-    folderId?: string,
-  ): Promise<SearchFolderResponse> {
-    const params: Record<string, string> = { q: query };
-    if (folderId) params.folder_id = folderId;
-    return this.request<SearchFolderResponse>(
-      "folder/search",
-      params,
-      SearchFolderResponseSchema,
-    );
+  clearTransfers(): Promise<P.ClearTransfersResponse> {
+    return this.request<P.ClearTransfersResponse>({
+      endpoint: "/transfer/clearfinished",
+      params: {},
+      schema: P.ClearTransfersResponse,
+      method: "post",
+    });
   }
 
-  // Item operations
-  async deleteItem(id: string): Promise<ApiResponse<null>> {
-    return this.request<ApiResponse<null>>(
-      "item/delete",
-      { id },
-      DeleteItemResponseSchema,
-      "post",
-    );
+  deleteTransfers(
+    opts: P.DeleteTransfersRequest,
+  ): Promise<P.DeleteTransfersResponse> {
+    return this.request<P.DeleteTransfersResponse>({
+      endpoint: "/transfer/delete",
+      params: {
+        id: opts.id,
+      },
+      schema: P.DeleteTransfersResponse,
+      method: "post",
+    });
   }
 
-  async renameItem(id: string, name: string): Promise<ApiResponse<null>> {
-    return this.request<ApiResponse<null>>(
-      "item/rename",
-      { id, name },
-      RenameItemResponseSchema,
-      "post",
-    );
+  accountInfo(): Promise<P.AccountInfoResponse> {
+    return this.request<P.AccountInfoResponse>({
+      endpoint: "/account/info",
+      params: {},
+      schema: P.AccountInfoResponse,
+    });
   }
 
-  async getItemDetails(id: string): Promise<ItemDetailsResponse> {
-    return this.request<ItemDetailsResponse>(
-      "item/details",
-      { id },
-      ItemDetailsResponseSchema,
-    );
+  generateZip(opts: P.GenerateZipRequest): Promise<P.GenerateZipResponse> {
+    return this.request<P.GenerateZipResponse>({
+      endpoint: "/zip/generate",
+      params: {
+        files: opts.files,
+        folders: opts.folders,
+      },
+      schema: P.GenerateZipResponse,
+      method: "post",
+    });
   }
 
-  // Transfer operations
-  async createDirectDownload(
-    request: DirectDownloadRequest,
-  ): Promise<DirectDownloadResponse> {
-    return this.request<DirectDownloadResponse>(
-      "transfer/directdl",
-      request,
-      DirectDownloadResponseSchema,
-      "post",
-    );
+  checkCache(opts: P.CheckCacheRequest): Promise<P.CheckCacheResponse> {
+    return this.request<P.CheckCacheResponse>({
+      endpoint: "/cache/check",
+      params: {
+        items: opts.items,
+      },
+      schema: P.CheckCacheResponse,
+      method: "post",
+    });
   }
 
-  async clearFinishedTransfers(): Promise<ApiResponse<null>> {
-    return this.request<ApiResponse<null>>(
-      "transfer/clearfinished",
-      {},
-      ClearFinishedTransfersResponseSchema,
-    );
-  }
-
-  // Zip operations
-  async generateZip(
-    items: string[],
-    name?: string,
-  ): Promise<GenerateZipResponse> {
-    const params: any = { items: items.join(",") };
-    if (name) params.name = name;
-    return this.request<GenerateZipResponse>(
-      "zip/generate",
-      params,
-      GenerateZipResponseSchema,
-      "post",
-    );
-  }
-
-  // Cache operations
-  async checkCache(urls: string[]): Promise<CheckCacheResponse> {
-    return this.request<CheckCacheResponse>(
-      "cache/check",
-      { items: urls.join(",") },
-      CheckCacheResponseSchema,
-    );
-  }
-
-  // Services operations
-  async listServices(): Promise<ListServicesResponse> {
-    return this.request<ListServicesResponse>(
-      "services/list",
-      {},
-      ListServicesResponseSchema,
-    );
+  listServices(): Promise<P.ListServicesResponse> {
+    return this.request<P.ListServicesResponse>({
+      endpoint: "/services/list",
+      params: {},
+      schema: P.ListServicesResponse,
+      method: "post",
+    });
   }
 }
 
-export { PremiumizeError, ApiRequestError } from "./errors";
+export { PremiumizeError } from "./errors";
 export default PremiumizeClient;
