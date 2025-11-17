@@ -49,7 +49,6 @@ export const ItemFolder = Item.pick({
   z.object({
     type: z.literal("folder"),
   }),
->>>>>>> c5a2980 (hand-made premiumize api client, not vibed.)
 );
 
 export const ItemFile = Item.pick({
