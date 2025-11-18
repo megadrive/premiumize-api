@@ -1,7 +1,8 @@
 import axios, { AxiosInstance } from "axios";
 import { z } from "zod";
-import * as P from "./types";
+
 import { HTTPError, PremiumizeError } from "./errors";
+import * as P from "./types";
 
 type RequestArguments = {
   endpoint: string;
@@ -39,19 +40,14 @@ export class PremiumizeClient {
 
       // API-level error returned in the body
       if (response.data && response.data.status === "error") {
-        throw new PremiumizeError(
-          response.data.message || "API request failed",
-          response.data,
-        );
+        throw new PremiumizeError(response.data.message || "API request failed", response.data);
       }
 
       // Validate response with Zod schema if provided
       if (opts.schema) {
         const validationResult = opts.schema.safeParse(response.data);
         if (!validationResult.success) {
-          throw new Error(
-            `API response validation failed: ${validationResult.error.message}`,
-          );
+          throw new Error(`API response validation failed: ${validationResult.error.message}`);
         }
         return validationResult.data as T;
       }
@@ -66,9 +62,7 @@ export class PremiumizeClient {
     }
   }
 
-  listFolder(
-    opts: P.ListFolderRequest = { includebreadcrumbs: false },
-  ): Promise<P.ListFolderResponse> {
+  listFolder(opts: P.ListFolderRequest = { includebreadcrumbs: false }): Promise<P.ListFolderResponse> {
     return this.request<P.ListFolderResponse>({
       endpoint: "/folder/list",
       params: {
@@ -158,9 +152,7 @@ export class PremiumizeClient {
     });
   }
 
-  getItemDetails(
-    opts: P.GetItemDetailsRequest,
-  ): Promise<P.GetItemDetailsResponse> {
+  getItemDetails(opts: P.GetItemDetailsRequest): Promise<P.GetItemDetailsResponse> {
     return this.request<P.GetItemDetailsResponse>({
       endpoint: "/item/details",
       params: {
@@ -170,9 +162,7 @@ export class PremiumizeClient {
     });
   }
 
-  createTransfer(
-    opts: P.CreateTransferRequest,
-  ): Promise<P.CreateTransferResponse> {
+  createTransfer(opts: P.CreateTransferRequest): Promise<P.CreateTransferResponse> {
     return this.request<P.CreateTransferResponse>({
       endpoint: "/transfer/create",
       params: {
@@ -201,9 +191,7 @@ export class PremiumizeClient {
     });
   }
 
-  deleteTransfers(
-    opts: P.DeleteTransfersRequest,
-  ): Promise<P.DeleteTransfersResponse> {
+  deleteTransfers(opts: P.DeleteTransfersRequest): Promise<P.DeleteTransfersResponse> {
     return this.request<P.DeleteTransfersResponse>({
       endpoint: "/transfer/delete",
       params: {
