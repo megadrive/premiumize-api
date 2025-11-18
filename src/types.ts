@@ -1,71 +1,71 @@
 // Types for Premiumize.me API
 
-import { isDirty, record, z } from "zod";
+import { z } from "zod";
 
 // Configuration interface (not derived from API)
 export interface PremiumizeConfig {
-  apiKey: string;
-  baseUrl?: string;
+    apiKey: string;
+    baseUrl?: string;
 }
 
 export const APIResponseError = z.object({
-  status: z.literal("error"),
-  message: z.string().describe("Error message as returned by Premiumize."),
+    status: z.literal("error"),
+    message: z.string().describe("Error message as returned by Premiumize."),
 });
 
 export const Item = z.object({
-  id: z.string().uuid().describe("Item ID"),
-  name: z.string().describe("Item name"),
-  type: z.enum(["file", "folder"]).describe("Item type"),
-  size: z.number().describe("Item size in bytes").nullish(),
-  mime_type: z.string().nullish(),
-  link: z.string().nullish(),
-  directlink: z.string().nullish(),
-  stream_link: z.string().nullish(),
-  transcode_status: z
-    .enum([
-      "not_applicable",
-      "running",
-      "finished",
-      "pending",
-      "good_as_is",
-      "error",
-      "fetch_pending",
-    ])
-    .nullish(),
-  virus_scan: z.enum(["ok", "infected", "error"]).nullish(),
-  crc32: z.string().nullish(),
-  unpackable: z.boolean().nullish(),
-  created_at: z
-    .number()
-    .nullish()
-    .describe("Item creation date as a UTC timestamp"),
+    id: z.string().uuid().describe("Item ID"),
+    name: z.string().describe("Item name"),
+    type: z.enum(["file", "folder"]).describe("Item type"),
+    size: z.number().describe("Item size in bytes").nullish(),
+    mime_type: z.string().nullish(),
+    link: z.string().nullish(),
+    directlink: z.string().nullish(),
+    stream_link: z.string().nullish(),
+    transcode_status: z
+        .enum([
+            "not_applicable",
+            "running",
+            "finished",
+            "pending",
+            "good_as_is",
+            "error",
+            "fetch_pending",
+        ])
+        .nullish(),
+    virus_scan: z.enum(["ok", "infected", "error"]).nullish(),
+    crc32: z.string().nullish(),
+    unpackable: z.boolean().nullish(),
+    created_at: z
+        .number()
+        .nullish()
+        .describe("Item creation date as a UTC timestamp"),
 });
 
 export const ItemFolder = Item.pick({
-  id: true,
-  name: true,
+    id: true,
+    name: true,
 }).merge(
-  z.object({
-    type: z.literal("folder"),
-  }),
+    z.object({
+        type: z.literal("folder"),
+    }),
 );
 
 export const ItemFile = Item.pick({
-  id: true,
-  name: true,
-  size: true,
-  crc32: true,
-  created_at: true,
-  mime_type: true,
-  link: true,
-  directlink: true,
-  stream_link: true,
-  unpackable: true,
+    id: true,
+    name: true,
+    size: true,
+    crc32: true,
+    created_at: true,
+    mime_type: true,
+    link: true,
+    directlink: true,
+    stream_link: true,
+    unpackable: true,
 }).merge(
-  z.object({
-    type: z.literal("file"),
-  }),
+    z.object({
+        type: z.literal("file"),
+    }),
 );
 
 /**
@@ -73,60 +73,60 @@ export const ItemFile = Item.pick({
  */
 
 export const ListFolderRequest = z.object({
-  id: z
-    .string()
-    .optional()
-    .describe("Folder ID to list, leave empty for the root."),
-  includebreadcrumbs: z
-    .boolean()
-    .default(false)
-    .describe("Include breadcrumbs from root to the item."),
+    id: z
+        .string()
+        .optional()
+        .describe("Folder ID to list, leave empty for the root."),
+    includebreadcrumbs: z
+        .boolean()
+        .default(false)
+        .describe("Include breadcrumbs from root to the item."),
 });
 
 export const ListFolderResponse = z.object({
-  content: z.array(z.discriminatedUnion("type", [ItemFolder, ItemFile])),
-  name: z.string().describe("Name of the folder"),
-  parent_id: z.string().describe("Parent folder ID"),
-  folder_id: z.string().describe("Folder ID"),
-  breadcrumbs: z
-    .array(
-      z.object({
-        id: z.string().uuid().describe("Breadcrumb ID"),
-        name: z.string().describe("Breadcrumb name"),
-      }),
-    )
-    .nullish(),
+    content: z.array(z.discriminatedUnion("type", [ItemFolder, ItemFile])),
+    name: z.string().describe("Name of the folder"),
+    parent_id: z.string().describe("Parent folder ID"),
+    folder_id: z.string().describe("Folder ID"),
+    breadcrumbs: z
+        .array(
+            z.object({
+                id: z.string().uuid().describe("Breadcrumb ID"),
+                name: z.string().describe("Breadcrumb name"),
+            }),
+        )
+        .nullish(),
 });
 
 export const CreateFolderRequest = z.object({
-  name: z.string().min(1).describe("Folder name"),
-  parent_id: z.string().optional().describe("Parent folder ID"),
+    name: z.string().min(1).describe("Folder name"),
+    parent_id: z.string().optional().describe("Parent folder ID"),
 });
 
 export const CreateFolderResponse = z.object({
-  id: z.string().describe("Folder ID"),
+    id: z.string().describe("Folder ID"),
 });
 
 export const RenameFolderRequest = z.object({
-  id: z.string().uuid().describe("Folder ID"),
-  name: z.string().min(1).describe("New folder name"),
+    id: z.string().uuid().describe("Folder ID"),
+    name: z.string().min(1).describe("New folder name"),
 });
 
 export const RenameFolderResponse = z.object({ message: z.string().nullish() });
 
 export const DeleteFolderRequest = z.object({
-  id: z.string().uuid().describe("Folder ID"),
+    id: z.string().uuid().describe("Folder ID"),
 });
 
 export const DeleteFolderResponse = z.object({ message: z.string().nullish() });
 
 export const SearchFolderRequest = z.object({
-  query: z.string().min(1).describe("Search query"),
+    query: z.string().min(1).describe("Search query"),
 });
 
 export const SearchFolderResponse = z.object({
-  content: z.array(z.discriminatedUnion("type", [ItemFolder, ItemFile])),
-  name: z.string().default("Search Results"),
+    content: z.array(z.discriminatedUnion("type", [ItemFolder, ItemFile])),
+    name: z.string().default("Search Results"),
 });
 
 /**
@@ -139,67 +139,67 @@ export const SearchFolderResponse = z.object({
 
 export const ListAllItemsRequest = z.object({}).nullable(); // always null
 export const ListAllItemsResponse = z.object({
-  files: z.array(
-    Item.pick({
-      id: true,
-      name: true,
-      created_at: true,
-      size: true,
-      mime_type: true,
-      virus_scan: true,
-    }).merge(
-      z.object({
-        path: z.string(),
-      }),
+    files: z.array(
+        Item.pick({
+            id: true,
+            name: true,
+            created_at: true,
+            size: true,
+            mime_type: true,
+            virus_scan: true,
+        }).merge(
+            z.object({
+                path: z.string(),
+            }),
+        ),
     ),
-  ),
 });
 
 export const DeleteItemRequest = z.object({
-  id: z.string().uuid().describe("Item ID"),
+    id: z.string().uuid().describe("Item ID"),
 });
 
 export const DeleteItemResponse = z.object({
-  message: z.string().nullish(),
+    message: z.string().nullish(),
 });
 
 export const RenameItemRequest = z.object({
-  id: z.string(),
-  name: z.string(),
+    id: z.string(),
+    name: z.string(),
 });
 
 export const RenameItemResponse = z.object({
-  message: z.string().nullish(),
+    message: z.string().nullish(),
 });
 
 export const GetItemDetailsRequest = z.object({
-  id: z.string(),
+    id: z.string(),
 });
 
 export const GetItemDetailsResponse = Item.pick({
-  id: true,
-  name: true,
-  size: true,
-  created_at: true,
-  link: true,
-  mime_type: true,
-  transcode_status: true,
-  virus_scan: true,
-  stream_link: true,
+    id: true,
+    name: true,
+    size: true,
+    created_at: true,
+    link: true,
+    mime_type: true,
+    transcode_status: true,
+    virus_scan: true,
+    stream_link: true,
 }).merge(
-  z.object({
-    type: z.literal("file"),
-    folder_id: z.string(),
-    server_name: z.string().nullish(),
-    acodec: z.string().nullish(),
-    vcodec: z.string().nullish(),
-    opensubtitles_hash: z.string().nullish(),
-    resx: z.coerce.number().nullish(),
-    resy: z.coerce.number().nullish(),
-    duration: z.coerce.number().nullish(),
-    audio_track_names: z.array(z.string()).nullish(),
-    bitrate: z.coerce.number().nullish(),
-  }),
+    z.object({
+        type: z.literal("file"),
+        folder_id: z.string(),
+        server_name: z.string().nullish(),
+        acodec: z.string().nullish(),
+        vcodec: z.string().nullish(),
+        opensubtitles_hash: z.string().nullish(),
+        resx: z.coerce.number().nullish(),
+        resy: z.coerce.number().nullish(),
+        duration: z.coerce.number().nullish(),
+        audio_track_names: z.array(z.string()).nullish(),
+        bitrate: z.coerce.number().nullish(),
+    }),
 );
 
 /**
@@ -211,56 +211,56 @@ export const GetItemDetailsResponse = Item.pick({
  */
 
 export const CreateTransferRequest = z.object({
-  src: z.string(),
-  // file
-  folder_id: z.string().optional(),
+    src: z.string(),
+    // file
+    folder_id: z.string().optional(),
 });
 
 export const CreateTransferResponse = z.object({
-  id: z.string(),
-  name: z.string(),
-  type: z.string(),
+    id: z.string(),
+    name: z.string(),
+    type: z.string(),
 });
 
 export const ListTransfersRequest = z.object({}).nullable();
 
 export const ListTransfersResponse = z.object({
-  transfers: z.array(
-    z.object({
-      id: z.string(),
-      name: z.string(),
-      message: z.string(),
-      status: z.enum([
-        "waiting",
-        "finished",
-        "running",
-        "deleted",
-        "banned",
-        "error",
-        "timeout",
-        "seeding",
-        "queued",
-      ]),
-      progress: z.coerce.number(),
-      src: z.string(),
-      folder_id: z.string(),
-      file_id: z.string(),
-    }),
-  ),
+    transfers: z.array(
+        z.object({
+            id: z.string(),
+            name: z.string(),
+            message: z.string(),
+            status: z.enum([
+                "waiting",
+                "finished",
+                "running",
+                "deleted",
+                "banned",
+                "error",
+                "timeout",
+                "seeding",
+                "queued",
+            ]),
+            progress: z.coerce.number(),
+            src: z.string(),
+            folder_id: z.string(),
+            file_id: z.string(),
+        }),
+    ),
 });
 
 export const ClearTransfersRequest = z.object({}).nullable();
 
 export const ClearTransfersResponse = z.object({
-  message: z.string().nullish(),
+    message: z.string().nullish(),
 });
 
 export const DeleteTransfersRequest = z.object({
-  id: z.string(),
+    id: z.string(),
 });
 
 export const DeleteTransfersResponse = z.object({
-  message: z.string().nullish(),
+    message: z.string().nullish(),
 });
 
 /**
@@ -273,10 +273,10 @@ export const DeleteTransfersResponse = z.object({
 export const AccountInfoRequest = z.object({}).nullable();
 
 export const AccountInfoResponse = z.object({
-  customer_id: z.coerce.number(),
-  premium_until: z.coerce.number(),
-  limit_used: z.coerce.number(),
-  space_used: z.coerce.number(),
+    customer_id: z.coerce.number(),
+    premium_until: z.coerce.number(),
+    limit_used: z.coerce.number(),
+    space_used: z.coerce.number(),
 });
 
 /**
@@ -288,12 +288,12 @@ export const AccountInfoResponse = z.object({
  */
 
 export const GenerateZipRequest = z.object({
-  files: z.array(z.string()).nullish(),
-  folders: z.array(z.string()).nullish(),
+    files: z.array(z.string()).nullish(),
+    folders: z.array(z.string()).nullish(),
 });
 
 export const GenerateZipResponse = z.object({
-  location: z.string(),
+    location: z.string(),
 });
 
 /**
@@ -305,14 +305,14 @@ export const GenerateZipResponse = z.object({
  */
 
 export const CheckCacheRequest = z.object({
-  items: z.array(z.string()),
+    items: z.array(z.string()),
 });
 
 export const CheckCacheResponse = z.object({
-  response: z.array(z.boolean()),
-  transcoded: z.array(z.boolean()),
-  filename: z.array(z.string()),
-  filesize: z.array(z.coerce.number()),
+    response: z.array(z.boolean()),
+    transcoded: z.array(z.boolean()),
+    filename: z.array(z.string()),
+    filesize: z.array(z.coerce.number()),
 });
 
 /**
@@ -325,11 +325,11 @@ export const CheckCacheResponse = z.object({
 
 export const ListServicesRequest = z.object({}).nullish();
 export const ListServicesResponse = z.object({
-  directdl: z.array(z.string()),
-  cache: z.array(z.string()),
-  fairusefactor: z.array(z.record(z.string(), z.array(z.number()))),
-  aliases: z.array(z.record(z.string(), z.array(z.string()))),
-  regexpatterns: z.array(z.record(z.string(), z.array(z.string()))),
+    directdl: z.array(z.string()),
+    cache: z.array(z.string()),
+    fairusefactor: z.array(z.record(z.string(), z.array(z.number()))),
+    aliases: z.array(z.record(z.string(), z.array(z.string()))),
+    regexpatterns: z.array(z.record(z.string(), z.array(z.string()))),
 });
 
 /**
