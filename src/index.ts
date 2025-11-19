@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, CreateAxiosDefaults } from "axios";
 import { z } from "zod";
 
 import { PremiumizeError } from "./errors";
@@ -13,54 +13,71 @@ type RequestArguments = {
 };
 
 export class PremiumizeClient {
+  private readonly apiKey: string;
   private client: AxiosInstance;
   private config: P.PremiumizeConfig;
+  /** Log when verboseLogging is enabled */
   private verboseLog = (...args: unknown[]) => {
     if (this.config.verboseLogging) {
       console.log(...args);
     }
   };
   /**
-   * Verbose logging,
+   * Verbose logging, enables the `verboseLog` function.
    */
   verboseLogging = false;
 
   static create(
     apiKey: string,
-    opts?: Partial<P.PremiumizeConfig>,
+    opts: Partial<Omit<P.PremiumizeConfig, "apiKey">> = {},
+    axiosConfig: CreateAxiosDefaults = {},
   ): PremiumizeClient {
     const resolvedOpts = {
       baseUrl: "https://www.premiumize.me/api",
-      ...(opts || {}),
+      ...opts,
     };
-    return new PremiumizeClient({ apiKey, ...resolvedOpts });
+    return new PremiumizeClient({ apiKey, ...resolvedOpts }, axiosConfig);
   }
 
-  constructor(config: P.PremiumizeConfig) {
-    this.config = {
+  constructor(config: P.PremiumizeConfig, axiosConfig?: CreateAxiosDefaults) {
+    this.apiKey = config.apiKey;
+    config.apiKey = "";
+    this.config = Object.freeze({
       baseUrl: "https://www.premiumize.me/api",
       ...config,
-    };
-    Object.freeze(this.config); // prevent modification
-
-    this.client = axios.create({
-      baseURL: this.config.baseUrl,
-      timeout: 10000,
     });
 
-    this.verboseLogging = config.verboseLogging ?? false;
+    this.client = axios.create({
+      // default timeout, but can be overridden
+      timeout: 10000,
+      // apply provided config
+      ...axiosConfig,
+      // prefer provided baseUrl from config
+      baseURL: this.config.baseUrl,
+    });
+
+    this.verboseLogging = this.config.verboseLogging ?? false;
   }
 
   private async request<T>(opts: RequestArguments): Promise<T> {
+    // Ensure APIKEY is not 0-length
+    if (!this.apiKey) {
+      throw new Error("API key is required");
+    }
+
+    // default to GET
+    const method = opts.method ?? "get";
+
     this.verboseLog(
-      `Requesting ${opts.endpoint} with ${obfuscateString(this.config.apiKey)}`,
+      `[${method.toUpperCase()}] ${opts.endpoint} with ${obfuscateString(this.apiKey)}`,
     );
+
     try {
       let response = await (() => {
-        if (opts.method === "post") {
+        if (method === "post") {
           return this.client.post(opts.endpoint, null, {
             params: {
-              apikey: this.config.apiKey,
+              apikey: this.apiKey,
               ...opts.params,
             },
           });
@@ -68,13 +85,22 @@ export class PremiumizeClient {
 
         return this.client.get(opts.endpoint, {
           params: {
-            apikey: this.config.apiKey,
+            apikey: this.apiKey,
             ...opts.params,
           },
         });
       })();
 
-      this.verboseLog(response.request);
+      const { path, method: reqMethod } = response.request ?? {};
+      this.verboseLog({
+        req: {
+          method: reqMethod,
+          path: path.replace(
+            new RegExp(this.apiKey),
+            obfuscateString(this.apiKey),
+          ),
+        },
+      });
 
       // API-level error returned in the body
       if (response.data && response.data.status === "error") {
