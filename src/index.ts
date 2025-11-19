@@ -1,8 +1,9 @@
 import axios, { AxiosInstance } from "axios";
 import { z } from "zod";
 
-import { HTTPError, PremiumizeError } from "./errors";
+import { PremiumizeError } from "./errors";
 import * as P from "./types";
+import { obfuscateString } from "./util";
 
 type RequestArguments = {
   endpoint: string;
@@ -14,6 +15,11 @@ type RequestArguments = {
 export class PremiumizeClient {
   private client: AxiosInstance;
   private config: P.PremiumizeConfig;
+  private verboseLog = (...args: unknown[]) => {
+    if (this.config.verboseLogging) {
+      console.log(...args);
+    }
+  };
 
   static create(apiKey: string, baseUrl?: string): PremiumizeClient {
     return new PremiumizeClient({ apiKey, baseUrl });
@@ -32,22 +38,45 @@ export class PremiumizeClient {
   }
 
   private async request<T>(opts: RequestArguments): Promise<T> {
+    this.verboseLog(
+      `Requesting ${opts.endpoint} with ${obfuscateString(this.config.apiKey)}`,
+    );
     try {
-      let response = await this.client[opts.method ?? "get"](opts.endpoint, {
-        apikey: this.config.apiKey,
-        ...opts.params,
-      });
+      let response = await (() => {
+        if (opts.method === "post") {
+          return this.client.post(opts.endpoint, null, {
+            params: {
+              apikey: this.config.apiKey,
+              ...opts.params,
+            },
+          });
+        }
+
+        return this.client.get(opts.endpoint, {
+          params: {
+            apikey: this.config.apiKey,
+            ...opts.params,
+          },
+        });
+      })();
+
+      this.verboseLog(response.request);
 
       // API-level error returned in the body
       if (response.data && response.data.status === "error") {
-        throw new PremiumizeError(response.data.message || "API request failed", response.data);
+        throw new PremiumizeError(
+          response.data.message || "API request failed",
+          response.data,
+        );
       }
 
       // Validate response with Zod schema if provided
       if (opts.schema) {
         const validationResult = opts.schema.safeParse(response.data);
         if (!validationResult.success) {
-          throw new Error(`API response validation failed: ${validationResult.error.message}`);
+          throw new Error(
+            `API response validation failed: ${validationResult.error.message}`,
+          );
         }
         return validationResult.data as T;
       }
@@ -55,14 +84,19 @@ export class PremiumizeClient {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new HTTPError(`API request failed: ${error.message}`);
+        throw new PremiumizeError(
+          `API request failed: ${error.message}`,
+          error,
+        );
       }
       // Re-throw custom errors (PremiumizeError) or other unexpected errors
       throw error;
     }
   }
 
-  listFolder(opts: P.ListFolderRequest = { includebreadcrumbs: false }): Promise<P.ListFolderResponse> {
+  listFolder(
+    opts: P.ListFolderRequest = { includebreadcrumbs: false },
+  ): Promise<P.ListFolderResponse> {
     return this.request<P.ListFolderResponse>({
       endpoint: "/folder/list",
       params: {
@@ -152,7 +186,9 @@ export class PremiumizeClient {
     });
   }
 
-  getItemDetails(opts: P.GetItemDetailsRequest): Promise<P.GetItemDetailsResponse> {
+  getItemDetails(
+    opts: P.GetItemDetailsRequest,
+  ): Promise<P.GetItemDetailsResponse> {
     return this.request<P.GetItemDetailsResponse>({
       endpoint: "/item/details",
       params: {
@@ -162,7 +198,9 @@ export class PremiumizeClient {
     });
   }
 
-  createTransfer(opts: P.CreateTransferRequest): Promise<P.CreateTransferResponse> {
+  createTransfer(
+    opts: P.CreateTransferRequest,
+  ): Promise<P.CreateTransferResponse> {
     return this.request<P.CreateTransferResponse>({
       endpoint: "/transfer/create",
       params: {
@@ -191,7 +229,9 @@ export class PremiumizeClient {
     });
   }
 
-  deleteTransfers(opts: P.DeleteTransfersRequest): Promise<P.DeleteTransfersResponse> {
+  deleteTransfers(
+    opts: P.DeleteTransfersRequest,
+  ): Promise<P.DeleteTransfersResponse> {
     return this.request<P.DeleteTransfersResponse>({
       endpoint: "/transfer/delete",
       params: {
