@@ -20,9 +20,20 @@ export class PremiumizeClient {
       console.log(...args);
     }
   };
+  /**
+   * Verbose logging,
+   */
+  verboseLogging = false;
 
-  static create(apiKey: string, baseUrl?: string): PremiumizeClient {
-    return new PremiumizeClient({ apiKey, baseUrl });
+  static create(
+    apiKey: string,
+    opts?: Partial<P.PremiumizeConfig>,
+  ): PremiumizeClient {
+    const resolvedOpts = {
+      baseUrl: "https://www.premiumize.me/api",
+      ...(opts || {}),
+    };
+    return new PremiumizeClient({ apiKey, ...resolvedOpts });
   }
 
   constructor(config: P.PremiumizeConfig) {
@@ -30,11 +41,14 @@ export class PremiumizeClient {
       baseUrl: "https://www.premiumize.me/api",
       ...config,
     };
+    Object.freeze(this.config); // prevent modification
 
     this.client = axios.create({
       baseURL: this.config.baseUrl,
       timeout: 10000,
     });
+
+    this.verboseLogging = config.verboseLogging ?? false;
   }
 
   private async request<T>(opts: RequestArguments): Promise<T> {
