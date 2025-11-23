@@ -14,6 +14,12 @@ type RequestArguments = {
 
 export class PremiumizeClient {
   private readonly apiKey: string;
+  private get apiKeyObfuscated() {
+    if (this.obfuscateApiKeysInLogs) {
+      return obfuscateString(this.apiKey);
+    }
+    return this.apiKey;
+  }
   private client: AxiosInstance;
   private config: P.PremiumizeConfig;
   /** Log when verboseLogging is enabled */
@@ -26,6 +32,7 @@ export class PremiumizeClient {
    * Verbose logging, enables the `verboseLog` function.
    */
   verboseLogging = false;
+  obfuscateApiKeysInLogs = true;
 
   static create(
     apiKey: string,
@@ -57,6 +64,15 @@ export class PremiumizeClient {
     });
 
     this.verboseLogging = this.config.verboseLogging ?? false;
+    if (this.verboseLogging) {
+      console.info(`Verbose logging enabled`);
+    }
+    this.obfuscateApiKeysInLogs = this.config.obfuscateApiKeysInLogs ?? true;
+    if (!this.obfuscateApiKeysInLogs) {
+      console.warn(
+        `Not obfuscating API key in logs, be careful doing this in production.`,
+      );
+    }
   }
 
   private async request<T>(opts: RequestArguments): Promise<T> {
@@ -69,7 +85,7 @@ export class PremiumizeClient {
     const method = opts.method ?? "get";
 
     this.verboseLog(
-      `[${method.toUpperCase()}] ${opts.endpoint} with ${obfuscateString(this.apiKey)}`,
+      `[${method.toUpperCase()}] ${opts.endpoint} with ${this.apiKeyObfuscated}`,
     );
 
     try {
@@ -95,10 +111,7 @@ export class PremiumizeClient {
       this.verboseLog({
         req: {
           method: reqMethod,
-          path: path.replace(
-            new RegExp(this.apiKey),
-            obfuscateString(this.apiKey),
-          ),
+          path: path.replace(new RegExp(this.apiKey), this.apiKeyObfuscated),
         },
       });
 
@@ -309,7 +322,6 @@ export class PremiumizeClient {
         items: opts.items,
       },
       schema: P.CheckCacheResponse,
-      method: "post",
     });
   }
 
@@ -318,7 +330,6 @@ export class PremiumizeClient {
       endpoint: "/services/list",
       params: {},
       schema: P.ListServicesResponse,
-      method: "post",
     });
   }
 }

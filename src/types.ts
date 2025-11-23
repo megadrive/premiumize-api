@@ -7,6 +7,7 @@ export interface PremiumizeConfig {
   apiKey: string;
   baseUrl?: string;
   verboseLogging?: boolean;
+  obfuscateApiKeysInLogs?: boolean;
 }
 
 export const APIResponseError = z.object({
@@ -141,7 +142,7 @@ export const SearchFolderResponse = z.object({
  * ITEM START
  */
 
-export const ListAllItemsRequest = z.object({}).nullable(); // always null
+export const ListAllItemsRequest = z.undefined(); // unneeded, here for completeness
 export const ListAllItemsResponse = z.object({
   files: z.array(
     Item.pick({
@@ -226,7 +227,7 @@ export const CreateTransferResponse = z.object({
   type: z.string(),
 });
 
-export const ListTransfersRequest = z.object({}).nullable();
+export const ListTransfersRequest = z.undefined();
 
 export const ListTransfersResponse = z.object({
   transfers: z.array(
@@ -253,7 +254,7 @@ export const ListTransfersResponse = z.object({
   ),
 });
 
-export const ClearTransfersRequest = z.object({}).nullable();
+export const ClearTransfersRequest = z.undefined();
 
 export const ClearTransfersResponse = z.object({
   message: z.string().nullish(),
@@ -274,7 +275,7 @@ export const DeleteTransfersResponse = z.object({
 /**
  * ACCOUNT START
  */
-export const AccountInfoRequest = z.object({}).nullable();
+export const AccountInfoRequest = z.undefined();
 
 export const AccountInfoResponse = z.object({
   customer_id: z.coerce.number(),
@@ -327,13 +328,13 @@ export const CheckCacheResponse = z.object({
  * SERVICES START
  */
 
-export const ListServicesRequest = z.object({}).nullish();
+export const ListServicesRequest = z.undefined();
 export const ListServicesResponse = z.object({
   directdl: z.array(z.string()),
   cache: z.array(z.string()),
-  fairusefactor: z.array(z.record(z.string(), z.array(z.number()))),
-  aliases: z.array(z.record(z.string(), z.array(z.string()))),
-  regexpatterns: z.array(z.record(z.string(), z.array(z.string()))),
+  fairusefactor: z.record(z.string(), z.number()),
+  aliases: z.record(z.string(), z.array(z.string())),
+  regexpatterns: z.record(z.string(), z.array(z.string())),
 });
 
 /**
