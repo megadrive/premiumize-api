@@ -10,7 +10,7 @@
     "format": "oxfmt",
     "lint-staged": "lint-staged",
     "prepare": "husky",
-    "publish": "np --no-tests"
+    "publish": "pnpm build && np --no-tests"
   },
   "keywords": [
     "premiumize",
