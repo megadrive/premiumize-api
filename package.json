@@ -10,7 +10,7 @@
     "format": "oxfmt",
     "lint-staged": "lint-staged",
     "prepare": "husky",
-    "test": "cd"
+    "publish": "np --no-tests"
   },
   "keywords": [
     "premiumize",
@@ -24,6 +24,7 @@
     "@types/node": "^20.0.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
+    "np": "^10.2.0",
     "oxfmt": "^0.14.0",
     "oxlint": "^1.23.0",
     "oxlint-tsgolint": "^0.7.1",
@@ -35,5 +36,8 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
