@@ -69,7 +69,9 @@ export class PremiumizeClient {
     }
     this.obfuscateApiKeysInLogs = this.config.obfuscateApiKeysInLogs ?? true;
     if (!this.obfuscateApiKeysInLogs) {
-      console.warn(`Not obfuscating API key in logs, be careful doing this in production.`);
+      console.warn(
+        `Not obfuscating API key in logs, be careful doing this in production.`,
+      );
     }
   }
 
@@ -82,7 +84,9 @@ export class PremiumizeClient {
     // default to GET
     const method = opts.method ?? "get";
 
-    this.verboseLog(`[${method.toUpperCase()}] ${opts.endpoint} with ${this.apiKeyObfuscated}`);
+    this.verboseLog(
+      `[${method.toUpperCase()}] ${opts.endpoint} with ${this.apiKeyObfuscated}`,
+    );
 
     try {
       let response = await (() => {
@@ -113,14 +117,19 @@ export class PremiumizeClient {
 
       // API-level error returned in the body
       if (response.data && response.data.status === "error") {
-        throw new PremiumizeError(response.data.message || "API request failed", response.data);
+        throw new PremiumizeError(
+          response.data.message || "API request failed",
+          response.data,
+        );
       }
 
       // Validate response with Zod schema if provided
       if (opts.schema) {
         const validationResult = opts.schema.safeParse(response.data);
         if (!validationResult.success) {
-          throw new Error(`API response validation failed: ${validationResult.error.message}`);
+          throw new Error(
+            `API response validation failed: ${validationResult.error.message}`,
+          );
         }
         return validationResult.data as T;
       }
@@ -128,13 +137,19 @@ export class PremiumizeClient {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new PremiumizeError(`API request failed: ${error.message}`, error);
+        throw new PremiumizeError(
+          `API request failed: ${error.message}`,
+          error,
+        );
       }
       // Re-throw custom errors (PremiumizeError) or other unexpected errors
       throw error;
     }
   }
 
+  /**
+   * List a folder, with optional breadcrumbs
+   */
   listFolder(opts: P.ListFolderRequest = {}): Promise<P.ListFolderResponse> {
     return this.request<P.ListFolderResponse>({
       endpoint: "/folder/list",
@@ -146,6 +161,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * Create a folder.
+   */
   createFolder(opts: P.CreateFolderRequest): Promise<P.CreateFolderResponse> {
     return this.request<P.CreateFolderResponse>({
       endpoint: "/folder/create",
@@ -158,6 +176,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * Rename a folder.
+   */
   renameFolder(opts: P.RenameFolderRequest): Promise<P.RenameFolderResponse> {
     return this.request<P.RenameFolderResponse>({
       endpoint: "/folder/rename",
@@ -170,6 +191,11 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * Paste a set of files or folders.
+   *
+   * Use this to move files or folders around.
+   */
   pasteFolder(opts: P.PasteFolderRequest): Promise<P.PasteFolderResponse> {
     return this.request<P.PasteFolderResponse>({
       endpoint: "/folder/paste",
@@ -183,8 +209,15 @@ export class PremiumizeClient {
     });
   }
 
-  /** get upload info. you will receive a token and a url. make a html upload to the url and send the file as "file" parameter and the token as "token" parameter. the file will be stored to the folder specified. */
-  getUploadInfo(opts: P.GetUploadInfoRequest): Promise<P.GetUploadInfoResponse> {
+  /**
+   * Get upload info.
+   *
+   * You will receive a token and a url. Make a HTML upload to the url and send the file as "file" parameter and
+   * the token as "token" parameter. The file will be stored to the folder specified.
+   */
+  getUploadInfo(
+    opts: P.GetUploadInfoRequest,
+  ): Promise<P.GetUploadInfoResponse> {
     return this.request<P.GetUploadInfoResponse>({
       endpoint: "/folder/uploadinfo",
       params: {
@@ -194,6 +227,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * Delete a folder.
+   */
   deleteFolder(opts: P.DeleteFolderRequest): Promise<P.DeleteFolderResponse> {
     return this.request<P.DeleteFolderResponse>({
       endpoint: "/folder/delete",
@@ -205,6 +241,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * Search Premiumize, you can use this to find files and folders.
+   */
   searchFolder(opts: P.SearchFolderRequest): Promise<P.SearchFolderResponse> {
     return this.request<P.SearchFolderResponse>({
       endpoint: "/folder/search",
@@ -215,6 +254,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * List all items in your Premiumize account.
+   */
   listAllItems(): Promise<P.ListAllItemsResponse> {
     return this.request<P.ListAllItemsResponse>({
       endpoint: "/item/listall",
@@ -223,6 +265,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * Delete an item.
+   */
   deleteItem(opts: P.DeleteItemRequest): Promise<P.DeleteItemResponse> {
     return this.request<P.DeleteItemResponse>({
       endpoint: "/item/delete",
@@ -234,6 +279,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * Rename an item.
+   */
   renameItem(opts: P.RenameItemRequest): Promise<P.RenameItemResponse> {
     return this.request<P.RenameItemResponse>({
       endpoint: "/item/rename",
@@ -246,7 +294,12 @@ export class PremiumizeClient {
     });
   }
 
-  getItemDetails(opts: P.GetItemDetailsRequest): Promise<P.GetItemDetailsResponse> {
+  /**
+   * Get extended details of an item.
+   */
+  getItemDetails(
+    opts: P.GetItemDetailsRequest,
+  ): Promise<P.GetItemDetailsResponse> {
     return this.request<P.GetItemDetailsResponse>({
       endpoint: "/item/details",
       params: {
@@ -256,7 +309,12 @@ export class PremiumizeClient {
     });
   }
 
-  createTransfer(opts: P.CreateTransferRequest): Promise<P.CreateTransferResponse> {
+  /**
+   * Create a new transfer.
+   */
+  createTransfer(
+    opts: P.CreateTransferRequest,
+  ): Promise<P.CreateTransferResponse> {
     return this.request<P.CreateTransferResponse>({
       endpoint: "/transfer/create",
       params: {
@@ -268,6 +326,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * List transfers.
+   */
   listTransfers(): Promise<P.ListTransfersResponse> {
     return this.request<P.ListTransfersResponse>({
       endpoint: "/transfer/list",
@@ -276,6 +337,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * Clear transfers that are not currently in progress.
+   */
   clearTransfers(): Promise<P.ClearTransfersResponse> {
     return this.request<P.ClearTransfersResponse>({
       endpoint: "/transfer/clearfinished",
@@ -285,7 +349,12 @@ export class PremiumizeClient {
     });
   }
 
-  deleteTransfers(opts: P.DeleteTransfersRequest): Promise<P.DeleteTransfersResponse> {
+  /**
+   * Delete a specific transfer.
+   */
+  deleteTransfer(
+    opts: P.DeleteTransfersRequest,
+  ): Promise<P.DeleteTransfersResponse> {
     return this.request<P.DeleteTransfersResponse>({
       endpoint: "/transfer/delete",
       params: {
@@ -296,6 +365,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * Get the account information.
+   */
   accountInfo(): Promise<P.AccountInfoResponse> {
     return this.request<P.AccountInfoResponse>({
       endpoint: "/account/info",
@@ -304,6 +376,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * Generate a ZIP from a list of files and folders.
+   */
   generateZip(opts: P.GenerateZipRequest): Promise<P.GenerateZipResponse> {
     return this.request<P.GenerateZipResponse>({
       endpoint: "/zip/generate",
@@ -316,6 +391,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * Check if a list of torrents are cached.
+   */
   checkCache(opts: P.CheckCacheRequest): Promise<P.CheckCacheResponse> {
     return this.request<P.CheckCacheResponse>({
       endpoint: "/cache/check",
@@ -326,6 +404,9 @@ export class PremiumizeClient {
     });
   }
 
+  /**
+   * List all available services, including fair-use points.
+   */
   listServices(): Promise<P.ListServicesResponse> {
     return this.request<P.ListServicesResponse>({
       endpoint: "/services/list",
