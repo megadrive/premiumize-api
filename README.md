@@ -212,12 +212,52 @@ const client = new PremiumizeClient({
 });
 ```
 
+## Testing
+
+This library uses Vitest for testing with MSW (Mock Service Worker) to mock API requests. This allows us to test the library without making real API calls.
+
+### Running Tests
+
+```bash
+# Run tests in watch mode
+pnpm test
+
+# Run tests once
+pnpm run test:run
+
+# Run tests with coverage
+pnpm run test:coverage
+```
+
+### Test Structure
+
+The tests are organized in the following way:
+
+1. `src/test/setup.ts` - Sets up the MSW server and provides mock handlers for API endpoints
+2. `src/client.test.ts` - Contains tests for the PremiumizeClient class and its methods
+
+Each test case mocks the API responses to verify that the client correctly handles different scenarios, including:
+
+- Successful API responses
+- API errors
+- Network errors
+- Validation of request parameters
+
+### Adding New Tests
+
+When adding new API methods to the library, make sure to add corresponding tests in `src/client.test.ts`. The pattern is:
+
+1. Define a mock response in `src/test/setup.ts` (if it's a new endpoint)
+2. Add a test case in `src/client.test.ts` that verifies the method works correctly
+3. Test both success and error cases
+
 ## Features
 
 - **Type Safety**: Full TypeScript support with strict typing
 - **Schema Validation**: Runtime validation using Zod schemas to ensure API responses match expected structure
 - **Error Handling**: Comprehensive error handling with descriptive messages
 - **Easy Configuration**: Simple setup with API key and optional custom base URL
+- **Comprehensive Testing**: Full test coverage with mocked API responses
 
 ## Development
 

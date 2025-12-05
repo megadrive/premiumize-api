@@ -10,7 +10,10 @@
     "format": "oxfmt",
     "lint-staged": "lint-staged",
     "prepare": "husky",
-    "publish": "pnpm build && np --no-tests"
+    "publish": "pnpm build && np --no-tests",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [
     "premiumize",
@@ -22,13 +25,16 @@
   "packageManager": "pnpm@10.23.0",
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@vitest/ui": "^4.0.15",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
+    "msw": "^2.12.4",
     "np": "^10.2.0",
     "oxfmt": "^0.14.0",
     "oxlint": "^1.23.0",
     "oxlint-tsgolint": "^0.7.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15"
   },
   "dependencies": {
     "axios": "^1.6.0",

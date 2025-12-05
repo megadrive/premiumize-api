@@ -12,7 +12,10 @@ export interface PremiumizeConfig {
 
 export const APIResponseError = z.object({
   status: z.literal("error"),
-  message: z.string().nullish().describe("Error message as returned by Premiumize."),
+  message: z
+    .string()
+    .nullish()
+    .describe("Error message as returned by Premiumize."),
 });
 
 export const Item = z.object({
@@ -25,12 +28,23 @@ export const Item = z.object({
   directlink: z.string().nullish(),
   stream_link: z.string().nullish(),
   transcode_status: z
-    .enum(["not_applicable", "running", "finished", "pending", "good_as_is", "error", "fetch_pending"])
+    .enum([
+      "not_applicable",
+      "running",
+      "finished",
+      "pending",
+      "good_as_is",
+      "error",
+      "fetch_pending",
+    ])
     .nullish(),
   virus_scan: z.enum(["ok", "infected", "error"]).nullish(),
   crc32: z.string().nullish(),
   unpackable: z.boolean().nullish(),
-  created_at: z.number().nullish().describe("Item creation date as a UTC timestamp"),
+  created_at: z
+    .number()
+    .nullish()
+    .describe("Item creation date as a UTC timestamp"),
 });
 
 export const ItemFolder = Item.pick({
@@ -64,8 +78,14 @@ export const ItemFile = Item.pick({
  */
 
 export const ListFolderRequest = z.object({
-  id: z.string().optional().describe("Folder ID to list, leave empty for the root."),
-  includebreadcrumbs: z.boolean().default(false).describe("Include breadcrumbs from root to the item."),
+  id: z
+    .string()
+    .optional()
+    .describe("Folder ID to list, leave empty for the root."),
+  includebreadcrumbs: z
+    .boolean()
+    .optional()
+    .describe("Include breadcrumbs from root to the item."),
 });
 
 export const ListFolderResponse = z.object({
@@ -98,6 +118,27 @@ export const RenameFolderRequest = z.object({
 });
 
 export const RenameFolderResponse = z.object({ message: z.string().nullish() });
+
+export const PasteFolderRequest = z.object({
+  id: z.string().describe("id of folder to paste to"),
+  files: z.string().array().describe("ids of files to paste"),
+  folders: z.string().array().describe("ids of folders to paste"),
+});
+
+export const PasteFolderResponse = z.object({ message: z.string().nullish() });
+
+export const GetUploadInfoRequest = z.object({
+  id: z.string().describe("Folder ID"),
+});
+
+export const GetUploadFileRequest = z.object({
+  id: z.string().nullish(),
+});
+
+export const GetUploadInfoResponse = z.object({
+  token: z.string().describe("Upload token"),
+  url: z.string().describe("Upload URL"),
+});
 
 export const DeleteFolderRequest = z.object({
   id: z.string().describe("Folder ID"),
@@ -215,7 +256,17 @@ export const ListTransfersResponse = z.object({
       id: z.string(),
       name: z.string(),
       message: z.string().nullish(),
-      status: z.enum(["waiting", "finished", "running", "deleted", "banned", "error", "timeout", "seeding", "queued"]),
+      status: z.enum([
+        "waiting",
+        "finished",
+        "running",
+        "deleted",
+        "banned",
+        "error",
+        "timeout",
+        "seeding",
+        "queued",
+      ]),
       progress: z.coerce.number(),
       src: z.string(),
       folder_id: z.string().nullish(),
@@ -316,10 +367,14 @@ export type CreateFolderRequest = z.infer<typeof CreateFolderRequest>;
 export type CreateFolderResponse = z.infer<typeof CreateFolderResponse>;
 export type RenameFolderRequest = z.infer<typeof RenameFolderRequest>;
 export type RenameFolderResponse = z.infer<typeof RenameFolderResponse>;
+export type PasteFolderRequest = z.infer<typeof PasteFolderRequest>;
+export type PasteFolderResponse = z.infer<typeof PasteFolderResponse>;
 export type DeleteFolderRequest = z.infer<typeof DeleteFolderRequest>;
 export type DeleteFolderResponse = z.infer<typeof DeleteFolderResponse>;
 export type SearchFolderRequest = z.infer<typeof SearchFolderRequest>;
 export type SearchFolderResponse = z.infer<typeof SearchFolderResponse>;
+export type GetUploadInfoRequest = z.infer<typeof GetUploadInfoRequest>;
+export type GetUploadInfoResponse = z.infer<typeof GetUploadInfoResponse>;
 
 export type ListAllItemsRequest = z.infer<typeof ListAllItemsRequest>;
 export type ListAllItemsResponse = z.infer<typeof ListAllItemsResponse>;

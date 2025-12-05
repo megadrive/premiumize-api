@@ -69,7 +69,9 @@ export class PremiumizeClient {
     }
     this.obfuscateApiKeysInLogs = this.config.obfuscateApiKeysInLogs ?? true;
     if (!this.obfuscateApiKeysInLogs) {
-      console.warn(`Not obfuscating API key in logs, be careful doing this in production.`);
+      console.warn(
+        `Not obfuscating API key in logs, be careful doing this in production.`,
+      );
     }
   }
 
@@ -82,7 +84,9 @@ export class PremiumizeClient {
     // default to GET
     const method = opts.method ?? "get";
 
-    this.verboseLog(`[${method.toUpperCase()}] ${opts.endpoint} with ${this.apiKeyObfuscated}`);
+    this.verboseLog(
+      `[${method.toUpperCase()}] ${opts.endpoint} with ${this.apiKeyObfuscated}`,
+    );
 
     try {
       let response = await (() => {
@@ -113,14 +117,19 @@ export class PremiumizeClient {
 
       // API-level error returned in the body
       if (response.data && response.data.status === "error") {
-        throw new PremiumizeError(response.data.message || "API request failed", response.data);
+        throw new PremiumizeError(
+          response.data.message || "API request failed",
+          response.data,
+        );
       }
 
       // Validate response with Zod schema if provided
       if (opts.schema) {
         const validationResult = opts.schema.safeParse(response.data);
         if (!validationResult.success) {
-          throw new Error(`API response validation failed: ${validationResult.error.message}`);
+          throw new Error(
+            `API response validation failed: ${validationResult.error.message}`,
+          );
         }
         return validationResult.data as T;
       }
@@ -128,14 +137,17 @@ export class PremiumizeClient {
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new PremiumizeError(`API request failed: ${error.message}`, error);
+        throw new PremiumizeError(
+          `API request failed: ${error.message}`,
+          error,
+        );
       }
       // Re-throw custom errors (PremiumizeError) or other unexpected errors
       throw error;
     }
   }
 
-  listFolder(opts: P.ListFolderRequest = { includebreadcrumbs: false }): Promise<P.ListFolderResponse> {
+  listFolder(opts: P.ListFolderRequest = {}): Promise<P.ListFolderResponse> {
     return this.request<P.ListFolderResponse>({
       endpoint: "/folder/list",
       params: {
@@ -170,8 +182,31 @@ export class PremiumizeClient {
     });
   }
 
-  // PLACEHOLDER
-  // pasteFolder() { }
+  pasteFolder(opts: P.PasteFolderRequest): Promise<P.PasteFolderResponse> {
+    return this.request<P.PasteFolderResponse>({
+      endpoint: "/folder/paste",
+      params: {
+        id: opts.id,
+        folders: opts.folders,
+        files: opts.files,
+      },
+      schema: P.PasteFolderResponse,
+      method: "post",
+    });
+  }
+
+  /** get upload info. you will receive a token and a url. make a html upload to the url and send the file as "file" parameter and the token as "token" parameter. the file will be stored to the folder specified. */
+  getUploadInfo(
+    opts: P.GetUploadInfoRequest,
+  ): Promise<P.GetUploadInfoResponse> {
+    return this.request<P.GetUploadInfoResponse>({
+      endpoint: "/folder/uploadinfo",
+      params: {
+        id: opts.id,
+      },
+      schema: P.GetUploadInfoResponse,
+    });
+  }
 
   deleteFolder(opts: P.DeleteFolderRequest): Promise<P.DeleteFolderResponse> {
     return this.request<P.DeleteFolderResponse>({
@@ -225,7 +260,9 @@ export class PremiumizeClient {
     });
   }
 
-  getItemDetails(opts: P.GetItemDetailsRequest): Promise<P.GetItemDetailsResponse> {
+  getItemDetails(
+    opts: P.GetItemDetailsRequest,
+  ): Promise<P.GetItemDetailsResponse> {
     return this.request<P.GetItemDetailsResponse>({
       endpoint: "/item/details",
       params: {
@@ -235,7 +272,9 @@ export class PremiumizeClient {
     });
   }
 
-  createTransfer(opts: P.CreateTransferRequest): Promise<P.CreateTransferResponse> {
+  createTransfer(
+    opts: P.CreateTransferRequest,
+  ): Promise<P.CreateTransferResponse> {
     return this.request<P.CreateTransferResponse>({
       endpoint: "/transfer/create",
       params: {
@@ -264,7 +303,9 @@ export class PremiumizeClient {
     });
   }
 
-  deleteTransfers(opts: P.DeleteTransfersRequest): Promise<P.DeleteTransfersResponse> {
+  deleteTransfers(
+    opts: P.DeleteTransfersRequest,
+  ): Promise<P.DeleteTransfersResponse> {
     return this.request<P.DeleteTransfersResponse>({
       endpoint: "/transfer/delete",
       params: {
@@ -287,8 +328,8 @@ export class PremiumizeClient {
     return this.request<P.GenerateZipResponse>({
       endpoint: "/zip/generate",
       params: {
-        files: opts.files,
-        folders: opts.folders,
+        files: opts.files ?? [],
+        folders: opts.folders ?? [],
       },
       schema: P.GenerateZipResponse,
       method: "post",
