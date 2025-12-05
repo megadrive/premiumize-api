@@ -10,7 +10,7 @@
     "format": "oxfmt",
     "lint-staged": "lint-staged",
     "prepare": "husky",
-    "publish": "pnpm build && np --no-tests",
+    "publish": "pnpm build && np",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage"
