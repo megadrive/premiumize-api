@@ -25,6 +25,7 @@
   "packageManager": "pnpm@10.23.0",
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "4.0.15",
     "@vitest/ui": "^4.0.15",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
