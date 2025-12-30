@@ -8,11 +8,15 @@ export interface PremiumizeConfig {
   baseUrl?: string;
   verboseLogging?: boolean;
   obfuscateApiKeysInLogs?: boolean;
+  validateResponses?: boolean;
 }
 
 export const APIResponseError = z.object({
   status: z.literal("error"),
-  message: z.string().nullish().describe("Error message as returned by Premiumize."),
+  message: z
+    .string()
+    .nullish()
+    .describe("Error message as returned by Premiumize."),
 });
 
 export const Item = z.object({
@@ -25,12 +29,23 @@ export const Item = z.object({
   directlink: z.string().nullish(),
   stream_link: z.string().nullish(),
   transcode_status: z
-    .enum(["not_applicable", "running", "finished", "pending", "good_as_is", "error", "fetch_pending"])
+    .enum([
+      "not_applicable",
+      "running",
+      "finished",
+      "pending",
+      "good_as_is",
+      "error",
+      "fetch_pending",
+    ])
     .nullish(),
   virus_scan: z.enum(["ok", "infected", "error"]).nullish(),
   crc32: z.string().nullish(),
   unpackable: z.boolean().nullish(),
-  created_at: z.number().nullish().describe("Item creation date as a UTC timestamp"),
+  created_at: z
+    .number()
+    .nullish()
+    .describe("Item creation date as a UTC timestamp"),
 });
 
 export const ItemFolder = Item.pick({
@@ -64,8 +79,14 @@ export const ItemFile = Item.pick({
  */
 
 export const ListFolderRequest = z.object({
-  id: z.string().optional().describe("Folder ID to list, leave empty for the root."),
-  includebreadcrumbs: z.boolean().optional().describe("Include breadcrumbs from root to the item."),
+  id: z
+    .string()
+    .optional()
+    .describe("Folder ID to list, leave empty for the root."),
+  includebreadcrumbs: z
+    .boolean()
+    .optional()
+    .describe("Include breadcrumbs from root to the item."),
 });
 
 export const ListFolderResponse = z.object({
@@ -85,7 +106,7 @@ export const ListFolderResponse = z.object({
 
 export const CreateFolderRequest = z.object({
   name: z.string().min(1).describe("Folder name"),
-  parent_id: z.string().optional().describe("Parent folder ID"),
+  parent_id: z.string().nullish().describe("Parent folder ID"),
 });
 
 export const CreateFolderResponse = z.object({
@@ -236,7 +257,17 @@ export const ListTransfersResponse = z.object({
       id: z.string(),
       name: z.string(),
       message: z.string().nullish(),
-      status: z.enum(["waiting", "finished", "running", "deleted", "banned", "error", "timeout", "seeding", "queued"]),
+      status: z.enum([
+        "waiting",
+        "finished",
+        "running",
+        "deleted",
+        "banned",
+        "error",
+        "timeout",
+        "seeding",
+        "queued",
+      ]),
       progress: z.coerce.number(),
       src: z.string(),
       folder_id: z.string().nullish(),

@@ -14,6 +14,12 @@ if (!apiKey) {
     // Use this endpoint to see if a user is premium or not
     const accountInfo = await premiumize.accountInfo();
     console.log(accountInfo);
+
+    const folder = await premiumize.listFolder();
+    console.log(folder);
+
+    const search = await premiumize.searchFolder({ query: "Home Alone" });
+    console.log(search);
   } catch (error) {
     if (error instanceof PremiumizeError) {
       console.error(`Premiumize API error: ${error.message}`);
